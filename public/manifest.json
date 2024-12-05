@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Excalidraw File Manager",
+  "version": "1.0.1",
+  "description": "Easily sync custom subtitles, manage playlists, take notes, and access transcripts.",
+  "icons": {
+    "16": "icon-16.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup/index.html"
+  },
+  "content_scripts": [
+    {
+      "js": ["assets/content.js"],
+      "matches": ["https://www.youtube.com/*"]
+    }
+  ],
+  "background": {
+    "service_worker": "assets/background.js",
+    "type": "module"
+  },
+  "web_accessible_resources": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "resources": ["assets/*"]
+    }
+  ],
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://www.youtube.com/*"]
+}

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Excalidraw File Manager",
   "version": "1.0.1",
-  "description": "Easily sync custom subtitles, manage playlists, take notes, and access transcripts.",
+  "description": "A browser extension to manage and interact with Excalidraw files, enabling enhanced functionality on the Excalidraw website.",
   "icons": {
     "16": "icon-16.png",
     "48": "icon-48.png",

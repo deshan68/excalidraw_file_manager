@@ -11,7 +11,7 @@ const RecentFile = () => {
   return (
     <Flex direction="column">
       <Flex justify="between" align="center">
-        <Text size="4" weight="bold">
+        <Text size="2" weight="bold">
           Recent
         </Text>
         <Text

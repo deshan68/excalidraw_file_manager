@@ -1,9 +1,20 @@
-import { Flex, Text, DropdownMenu, Dialog, Button } from "@radix-ui/themes";
-import { DotsVerticalIcon, FileIcon } from "@radix-ui/react-icons";
+import {
+  Flex,
+  Text,
+  DropdownMenu,
+  Dialog,
+  Button,
+  Spinner,
+} from "@radix-ui/themes";
+import {
+  DotFilledIcon,
+  DotsVerticalIcon,
+  FileIcon,
+} from "@radix-ui/react-icons";
 import { File } from "../utils/types";
 import { useAppDispatch, useAppSelector } from "../hooks/UseReduxType";
-import { setStorage } from "../../../shared/chrome-utils";
-import { StorageKeys } from "../../../shared/types";
+import { sendMessageToContent, setStorage } from "../../../shared/chrome-utils";
+import { MessageTypes, STORAGE_KEYS } from "../../../shared/types";
 import { deleteFile } from "../slices/fileSlice";
 import { useState } from "react";
 import {
@@ -11,17 +22,22 @@ import {
   removeFileFromCollection,
   removeFileIdFromCollection,
 } from "../slices/collectionSlice";
+import { updateCurrentWorkingFileId } from "../slices/configSlice";
 
 const FileCard = ({ file }: { file: File }) => {
   const dispatch = useAppDispatch();
   const files = useAppSelector((state) => state.file.files);
   const collections = useAppSelector((state) => state.collection.collections);
+  const currentWorkingFileId = useAppSelector(
+    (state) => state.config.currentWorkingFileId
+  );
   const currentScreen = useAppSelector(
     (state) => state.navigation.currentScreen
   );
 
   const [openCollectionListDialog, setOpenCollectionListDialog] =
     useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleAddToCollection = async (collectionId: string) => {
     const selectedCollection = collections.map((c) => {
@@ -32,7 +48,7 @@ const FileCard = ({ file }: { file: File }) => {
     });
 
     await setStorage(
-      StorageKeys.COLLECTION,
+      STORAGE_KEYS.COLLECTION,
       JSON.stringify(selectedCollection)
     );
 
@@ -43,7 +59,7 @@ const FileCard = ({ file }: { file: File }) => {
 
   const handleDeleteFile = async () => {
     const updatedFiles = files.filter((f) => f.id !== file.id);
-    await setStorage(StorageKeys.FILE, JSON.stringify(updatedFiles));
+    await setStorage(STORAGE_KEYS.FILE, JSON.stringify(updatedFiles));
     dispatch(deleteFile(file.id));
 
     const updatedCollections = collections.map((c) =>
@@ -52,10 +68,15 @@ const FileCard = ({ file }: { file: File }) => {
         : c
     );
     await setStorage(
-      StorageKeys.COLLECTION,
+      STORAGE_KEYS.COLLECTION,
       JSON.stringify(updatedCollections)
     );
     dispatch(removeFileIdFromCollection(file.id));
+
+    sendMessageToContent({
+      type: MessageTypes.PUSH_CURRENT_WORKING_FILE_NAME,
+      body: { fileName: "Please choose the file before start Drawing" },
+    });
   };
 
   const handleRemoveFromCollection = async () => {
@@ -77,7 +98,10 @@ const FileCard = ({ file }: { file: File }) => {
       })
     );
 
-    await setStorage(StorageKeys.COLLECTION, JSON.stringify(updatedCollection));
+    await setStorage(
+      STORAGE_KEYS.COLLECTION,
+      JSON.stringify(updatedCollection)
+    );
   };
 
   const isAlreadyAdded = (collectionId: string): boolean => {
@@ -118,6 +142,38 @@ const FileCard = ({ file }: { file: File }) => {
     );
   };
 
+  const handleClickFileCard = async () => {
+    if (isLoading) return;
+
+    try {
+      setIsLoading(true);
+      await setStorage(
+        STORAGE_KEYS.CURRENT_WORKING_FILE_ID,
+        JSON.stringify(file.id)
+      );
+      dispatch(updateCurrentWorkingFileId(file.id));
+
+      await sendMessageToContent({
+        type: MessageTypes.PUSH_EXCALIDRAW_FILE,
+        body: { excalidraw: file.excalidraw },
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      pushFileName();
+    }
+  };
+
+  const pushFileName = () => {
+    setTimeout(() => {
+      sendMessageToContent({
+        type: MessageTypes.PUSH_CURRENT_WORKING_FILE_NAME,
+        body: { fileName: file.name },
+      });
+      setIsLoading(false);
+    }, 1500);
+  };
+
   return (
     <Flex minWidth="100%">
       <Flex
@@ -125,7 +181,7 @@ const FileCard = ({ file }: { file: File }) => {
           cursor: "pointer",
           width: "100%",
         }}
-        onClick={() => console.log("File clicked:", file.name)}
+        onClick={() => handleClickFileCard()}
       >
         <Flex
           style={{
@@ -133,13 +189,30 @@ const FileCard = ({ file }: { file: File }) => {
             borderRadius: "30%",
           }}
           p="4"
+          position="relative"
         >
           <FileIcon />
+
+          {currentWorkingFileId === file.id && (
+            <DotFilledIcon
+              width="18"
+              height="18"
+              style={{ color: "green", position: "absolute", top: 1, right: 1 }}
+            />
+          )}
         </Flex>
 
         <Flex direction="column" ml="3" py="1">
-          <Text size="1" weight="bold" trim="both">
+          <Text
+            size="1"
+            weight="bold"
+            trim="both"
+            style={{
+              display: "flex",
+            }}
+          >
             {file.name}
+            {isLoading && <Spinner size="1" ml="3" />}
           </Text>
           <Text size="1" weight="light">
             {file.lastModified}
@@ -159,7 +232,10 @@ const FileCard = ({ file }: { file: File }) => {
         </DropdownMenu.Trigger>
         <DropdownMenu.Content size="1" color="gray" variant="soft">
           <DropdownMenu.Item
-            disabled={currentScreen?.params ? true : false}
+            disabled={
+              (currentScreen?.params ? true : false) ||
+              (collections.length === 0 ? true : false)
+            }
             onClick={() => setOpenCollectionListDialog(true)}
           >
             Add to collection

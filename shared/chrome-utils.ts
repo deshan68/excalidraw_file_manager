@@ -1,3 +1,18 @@
+import { Message } from "./types";
+
+export const sendMessageToContent = async <T = void>(
+  message: Message
+): Promise<T | undefined> => {
+  const [tab] = await chrome.tabs.query({
+    active: true,
+    lastFocusedWindow: true,
+  });
+
+  if (tab.id) {
+    const response = await chrome.tabs.sendMessage(tab.id, message);
+    return response;
+  }
+};
 
 export const setStorage = <T>(key: string, value: T): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -17,8 +32,14 @@ export const getStorage = <T>(key: string): Promise<T | undefined> => {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
       } else {
-        const value = result[key] ? (JSON.parse(result[key]) as T) : undefined;
-        resolve(value);
+        const rawValue = result[key];
+        try {
+          const value = rawValue ? (JSON.parse(rawValue) as T) : undefined;
+          resolve(value);
+        } catch (e) {
+          console.error(`Failed to parse JSON for key "${key}":`, rawValue, e);
+          resolve(undefined);
+        }
       }
     });
   });

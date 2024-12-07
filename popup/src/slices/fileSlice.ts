@@ -22,12 +22,8 @@ const fileSlice = createSlice({
     loadFiles: (state, action: PayloadAction<File[]>) => {
       state.files = action.payload;
     },
-    incrementByAmount: (_, action: PayloadAction<File>) => {
-      console.log(action);
-    },
   },
 });
 
-export const { addFile, loadFiles, deleteFile, incrementByAmount } =
-  fileSlice.actions;
+export const { addFile, loadFiles, deleteFile } = fileSlice.actions;
 export default fileSlice.reducer;

@@ -6,7 +6,7 @@ import CollectionCard from "../components/CollectionCard";
 import { useState } from "react";
 import { deleteCollection } from "../slices/collectionSlice";
 import { setStorage } from "../../../shared/chrome-utils";
-import { StorageKeys } from "../../../shared/types";
+import { STORAGE_KEYS } from "../../../shared/types";
 import EmptyList from "../components/EmptyList";
 
 const AllCollectionsPage = () => {
@@ -26,10 +26,8 @@ const AllCollectionsPage = () => {
   const toggleCollectionSelection = (collectionId: string) => {
     setSelectedCollections((prevSelected) => {
       if (prevSelected.includes(collectionId)) {
-        // Remove if already selected
         return prevSelected.filter((id) => id !== collectionId);
       } else {
-        // Add if not selected
         return [...prevSelected, collectionId];
       }
     });
@@ -40,7 +38,7 @@ const AllCollectionsPage = () => {
       (c) => !selectedCollections.includes(c.id)
     );
     await setStorage(
-      StorageKeys.COLLECTION,
+      STORAGE_KEYS.COLLECTION,
       JSON.stringify(updatedCollections)
     );
     dispatch(deleteCollection(selectedCollections));

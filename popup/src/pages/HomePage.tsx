@@ -1,51 +1,95 @@
-import { Button, Flex } from "@radix-ui/themes";
+import { Flex } from "@radix-ui/themes";
 import Collections from "../components/Collections";
 import RecentFile from "../components/RecentFile";
 import HomeHeader from "../components/HomeHeader";
 import { useEffect } from "react";
 import {
-  getAllKeys,
   getStorage,
-  removeStorage,
+  sendMessageToContent,
+  setStorage,
 } from "../../../shared/chrome-utils";
-import { StorageKeys } from "../../../shared/types";
+import { MessageTypes, STORAGE_KEYS } from "../../../shared/types";
 import { Collection, File } from "../utils/types";
-import { useAppDispatch } from "../hooks/UseReduxType";
+import { useAppDispatch, useAppSelector } from "../hooks/UseReduxType";
 import { loadCollections } from "../slices/collectionSlice";
 import { loadFiles } from "../slices/fileSlice";
+import {
+  updateCurrentWorkingFileId,
+  updateUrlState,
+} from "../slices/configSlice";
+import InvalidUrlMessage from "../components/InvalidUrlMessage";
 
 const HomePage = () => {
   const dispatch = useAppDispatch();
+  const currentUrlState = useAppSelector((state) => state.config.isValidUrl);
 
   useEffect(() => {
+    checkCurrentURL();
     loadInitialData();
   }, []);
 
-  const reset = async () => {
-    const keys = await getAllKeys();
-    removeStorage(keys);
-  };
-
   const loadInitialData = async () => {
     const storageCollections = await getStorage<Collection[]>(
-      StorageKeys.COLLECTION
+      STORAGE_KEYS.COLLECTION
     );
-    const storageFiles = await getStorage<File[]>(StorageKeys.FILE);
-    console.log("storageCollections", storageCollections);
-    console.log("storageFiles", storageFiles);
-
     if (storageCollections) {
       dispatch(loadCollections(storageCollections));
     } else {
       dispatch(loadCollections([]));
     }
 
+    const storageFiles = await getStorage<File[]>(STORAGE_KEYS.FILE);
     if (storageFiles) {
       dispatch(loadFiles(storageFiles));
     } else {
       dispatch(loadFiles([]));
     }
+
+    const currentWorkingFileId = await getStorage<string>(
+      STORAGE_KEYS.CURRENT_WORKING_FILE_ID
+    );
+    if (currentWorkingFileId) {
+      dispatch(updateCurrentWorkingFileId(currentWorkingFileId));
+    } else {
+      dispatch(updateCurrentWorkingFileId(""));
+    }
+
+    if (currentWorkingFileId && storageFiles)
+      loadExcalidrawFile(currentWorkingFileId, storageFiles);
   };
+
+  const checkCurrentURL = async () => {
+    const response = await sendMessageToContent({
+      type: MessageTypes.OPEN_POPUP,
+    });
+    if (response) dispatch(updateUrlState(true));
+  };
+
+  const loadExcalidrawFile = async (
+    currentWorkingFileId: string,
+    storageFiles: File[]
+  ) => {
+    const response = await sendMessageToContent({
+      type: MessageTypes.LOAD_EXCALIDRAW_FILE,
+    });
+    if (!response) return;
+
+    const updatedFiles: File[] = storageFiles.map((f) => {
+      if (f.id === currentWorkingFileId)
+        return {
+          ...f,
+          excalidraw: response,
+        };
+      return f;
+    });
+
+    await setStorage(STORAGE_KEYS.FILE, JSON.stringify(updatedFiles));
+    dispatch(loadFiles(updatedFiles));
+  };
+
+  if (!currentUrlState) {
+    return <InvalidUrlMessage />;
+  }
 
   return (
     <Flex direction="column" gap="2">
@@ -57,10 +101,6 @@ const HomePage = () => {
 
       {/* Recent file */}
       <RecentFile />
-
-      <Button color="red" size={"1"} onClick={reset}>
-        Reset
-      </Button>
     </Flex>
   );
 };

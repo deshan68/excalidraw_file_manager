@@ -11,7 +11,7 @@ const Collections = () => {
   return (
     <Flex direction="column" gapY="1">
       <Flex justify="between" align="center">
-        <Text size="4" weight="bold">
+        <Text size="2" weight="bold">
           Collections
         </Text>
         <Text

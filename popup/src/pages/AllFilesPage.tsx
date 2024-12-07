@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, PlusIcon } from "@radix-ui/react-icons";
+import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { Flex, Text } from "@radix-ui/themes";
 import { useAppDispatch, useAppSelector } from "../hooks/UseReduxType";
 import { goBack } from "../slices/navigationSlice";
@@ -41,29 +41,9 @@ const AllFilesPage = () => {
             {currentScreen.title}
           </Text>
         </Flex>
-
-        <Flex
-          style={{
-            backgroundColor: "#E6E5FF",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-          justify="center"
-          align="center"
-          gapX="1"
-          px="2"
-          py="1"
-        >
-          <PlusIcon />
-          <Text size="1" weight="light">
-            File
-          </Text>
-        </Flex>
       </Flex>
       <Flex gapY="2" direction={"column"}>
-        {getFilesByCollectionId().length === 0 && (
-          <EmptyList title="file" />
-        )}
+        {getFilesByCollectionId().length === 0 && <EmptyList title="file" />}
 
         {getFilesByCollectionId().map((file) => (
           <FileCard file={file} />

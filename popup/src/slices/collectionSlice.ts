@@ -52,7 +52,6 @@ const collectionSlice = createSlice({
         }
         return c;
       });
-      console.log(state.collections);
     },
     loadCollections: (state, action: PayloadAction<Collection[]>) => {
       state.collections = action.payload;

@@ -5,13 +5,13 @@ export class FileInstance {
   id: string;
   name: string;
   lastModified: string;
-  excalidraw: string;
+  excalidraw: any[] | [];
 
-  constructor(name: string) {
+  constructor(name: string, excalidraw: any[] | []) {
     this.id = uuidv4();
     this.name = name;
     this.lastModified = new Date().toLocaleString();
-    this.excalidraw = "";
+    this.excalidraw = excalidraw;
   }
 
   public getFile(): File {

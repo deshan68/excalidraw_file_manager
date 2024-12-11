@@ -8,9 +8,7 @@ import { useAppContext } from "../context/AppProvider";
 const HomePage = () => {
   const { isValidUrl } = useAppContext();
 
-  if (!isValidUrl) {
-    return <InvalidUrlMessage />;
-  }
+  if (!isValidUrl) return <InvalidUrlMessage />;
 
   return (
     <Flex direction="column" gap="2">

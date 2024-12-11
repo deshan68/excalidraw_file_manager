@@ -44,61 +44,57 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const loadInitialData = async () => {
-    const storageCollections = await getStorage<Collection[]>(
-      STORAGE_KEYS.COLLECTION
-    );
-    if (storageCollections) {
-      dispatch(loadCollections(storageCollections));
-    } else {
-      dispatch(loadCollections([]));
-    }
+    try {
+      const [collections, files, currentWorkingFileId] = await Promise.all([
+        getStorage<Collection[]>(STORAGE_KEYS.COLLECTION),
+        getStorage<File[]>(STORAGE_KEYS.FILE),
+        getStorage<string>(STORAGE_KEYS.CURRENT_WORKING_FILE_ID),
+      ]);
 
-    const storageFiles = await getStorage<File[]>(STORAGE_KEYS.FILE);
-    if (storageFiles) {
-      dispatch(loadFiles(storageFiles));
-    } else {
-      dispatch(loadFiles([]));
-    }
+      dispatch(loadCollections(collections || []));
 
-    const currentWorkingFileId = await getStorage<string>(
-      STORAGE_KEYS.CURRENT_WORKING_FILE_ID
-    );
-    if (currentWorkingFileId) {
-      dispatch(updateCurrentWorkingFileId(currentWorkingFileId));
-    } else {
-      dispatch(updateCurrentWorkingFileId(""));
-    }
+      dispatch(loadFiles(files || []));
 
-    if (currentWorkingFileId && storageFiles)
-      loadExcalidrawFile(currentWorkingFileId, storageFiles);
+      dispatch(updateCurrentWorkingFileId(currentWorkingFileId || ""));
+
+      if (currentWorkingFileId && files) {
+        await loadExcalidrawFile(currentWorkingFileId, files);
+      }
+    } catch (error) {
+      console.error("Error loading initial data:", error);
+    }
   };
 
   const loadExcalidrawFile = async (
     currentWorkingFileId: string,
     storageFiles: File[]
   ) => {
-    const response = await sendMessageToContent({
-      type: MessageTypes.LOAD_EXCALIDRAW_FILE,
-    });
-    if (!response) return;
+    try {
+      const response = await sendMessageToContent({
+        type: MessageTypes.LOAD_EXCALIDRAW_FILE,
+      });
 
-    const updatedFiles: File[] = storageFiles.map((f) => {
-      if (f.id === currentWorkingFileId)
-        return {
-          ...f,
-          excalidraw: response,
-        };
-      return f;
-    });
+      if (!response) return;
 
-    await setStorage(STORAGE_KEYS.FILE, JSON.stringify(updatedFiles));
-    dispatch(loadFiles(updatedFiles));
+      const updatedFiles: File[] = storageFiles.map((f) =>
+        f.id === currentWorkingFileId ? { ...f, excalidraw: response } : f
+      );
+
+      await setStorage(STORAGE_KEYS.FILE, JSON.stringify(updatedFiles));
+      dispatch(loadFiles(updatedFiles));
+    } catch (error) {
+      console.error("Error loading Excalidraw file:", error);
+    }
   };
-
+  
   useEffect(() => {
-    checkCurrentURL();
-    loadInitialData();
-  }, []);
+    const initialize = async () => {
+      await checkCurrentURL();
+      if (isValidUrl) await loadInitialData();
+    };
+
+    initialize();
+  }, [isValidUrl]);
 
   return (
     <AppContext.Provider value={{ isValidUrl, loading }}>

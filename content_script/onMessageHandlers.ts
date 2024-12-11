@@ -56,3 +56,11 @@ export const onPushFileNameToExcalidraw = async (
     console.error("Excalidraw App-menu div not found.");
   }
 };
+
+export const onPullFileNameFromExcalidraw = async (): Promise<string> => {
+  const element = document.querySelector(".file-name-div");
+
+  if (!element) return "";
+
+  return element.textContent || "";
+};

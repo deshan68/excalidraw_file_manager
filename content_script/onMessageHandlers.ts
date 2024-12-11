@@ -59,7 +59,6 @@ export const onPushFileNameToExcalidraw = async (
 
 export const onPullFileNameFromExcalidraw = async (): Promise<string> => {
   const element = document.querySelector(".file-name-div");
-  console.log("Elme", element?.textContent);
 
   if (!element) return "";
 

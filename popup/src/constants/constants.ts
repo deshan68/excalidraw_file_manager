@@ -7,3 +7,5 @@ export const screens = {
   AllCollectionsPage: AllCollectionsPage,
   AllFilesPage: AllFilesPage,
 };
+
+export const warningMessage = "Please choose the file before start Drawing";

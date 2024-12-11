@@ -16,6 +16,7 @@ import { Collection, File } from "../utils/types";
 import { loadCollections } from "../slices/collectionSlice";
 import { loadFiles } from "../slices/fileSlice";
 import { updateCurrentWorkingFileId } from "../slices/configSlice";
+import { warningMessage } from "../constants/constants";
 
 interface AppContextType {
   isValidUrl: boolean;
@@ -38,12 +39,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (response) setIsValidUrl(true);
     } catch (error) {
       console.error("Error while checking current URL");
-    } finally {
-      setLoading(false);
     }
   };
 
-  const loadInitialData = async () => {
+  const pullCurrentFileName = async () => {
+    try {
+      const response = await sendMessageToContent({
+        type: MessageTypes.PULL_CURRENT_WORKING_FILE_NAME,
+      });
+      loadInitialData(response || "");
+    } catch (error) {
+      console.error("Error while getting current File name");
+    }
+  };
+
+  const loadInitialData = async (fileName: string) => {
     try {
       const [collections, files, currentWorkingFileId] = await Promise.all([
         getStorage<Collection[]>(STORAGE_KEYS.COLLECTION),
@@ -55,7 +65,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       dispatch(loadFiles(files || []));
 
-      dispatch(updateCurrentWorkingFileId(currentWorkingFileId || ""));
+      let _currentWorkingFileId = "";
+      if (fileName !== warningMessage)
+        _currentWorkingFileId = currentWorkingFileId || "";
+
+      dispatch(updateCurrentWorkingFileId(_currentWorkingFileId));
 
       if (currentWorkingFileId && files) {
         await loadExcalidrawFile(currentWorkingFileId, files);
@@ -84,14 +98,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       dispatch(loadFiles(updatedFiles));
     } catch (error) {
       console.error("Error loading Excalidraw file:", error);
+    } finally {
+      setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     const initialize = async () => {
       await checkCurrentURL();
-      if (isValidUrl) await loadInitialData();
+      if (isValidUrl) await pullCurrentFileName();
     };
+
+    pullCurrentFileName();
 
     initialize();
   }, [isValidUrl]);

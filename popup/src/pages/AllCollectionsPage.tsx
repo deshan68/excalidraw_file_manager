@@ -8,9 +8,11 @@ import { deleteCollection } from "../slices/collectionSlice";
 import { setStorage } from "../../../shared/chrome-utils";
 import { STORAGE_KEYS } from "../../../shared/types";
 import EmptyList from "../components/EmptyList";
+import { useConfirmation } from "../context/ConfirmationContext";
 
 const AllCollectionsPage = () => {
   const dispatch = useAppDispatch();
+  const { showConfirmation } = useConfirmation();
 
   const collections = useAppSelector((state) => state.collection.collections);
   const currentScreen = useAppSelector(
@@ -33,7 +35,7 @@ const AllCollectionsPage = () => {
     });
   };
 
-  const handleDeleteCollection = async () => {
+  const _handleDeleteCollection = async () => {
     const updatedCollections = collections.filter(
       (c) => !selectedCollections.includes(c.id)
     );
@@ -42,6 +44,14 @@ const AllCollectionsPage = () => {
       JSON.stringify(updatedCollections)
     );
     dispatch(deleteCollection(selectedCollections));
+  };
+
+  const handleDeleteCollection = () => {
+    showConfirmation({
+      title: "Delete Collection(s)",
+      message: "Are you sure you want to delete this Collection(s)?",
+      onConfirm: () => _handleDeleteCollection(),
+    });
   };
 
   return (

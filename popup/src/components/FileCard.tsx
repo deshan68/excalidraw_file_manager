@@ -23,8 +23,10 @@ import {
   removeFileIdFromCollection,
 } from "../slices/collectionSlice";
 import { updateCurrentWorkingFileId } from "../slices/configSlice";
+import { useConfirmation } from "../context/ConfirmationContext";
 
 const FileCard = ({ file }: { file: File }) => {
+  const { showConfirmation } = useConfirmation();
   const dispatch = useAppDispatch();
   const files = useAppSelector((state) => state.file.files);
   const collections = useAppSelector((state) => state.collection.collections);
@@ -57,7 +59,7 @@ const FileCard = ({ file }: { file: File }) => {
     setOpenCollectionListDialog(false);
   };
 
-  const handleDeleteFile = async () => {
+  const _handleDeleteFile = async () => {
     const updatedFiles = files.filter((f) => f.id !== file.id);
     await setStorage(STORAGE_KEYS.FILE, JSON.stringify(updatedFiles));
     dispatch(deleteFile(file.id));
@@ -172,6 +174,14 @@ const FileCard = ({ file }: { file: File }) => {
       });
       setIsLoading(false);
     }, 1500);
+  };
+
+  const handleDeleteFile = () => {
+    showConfirmation({
+      title: "Delete Item",
+      message: "Are you sure you want to delete this item?",
+      onConfirm: () => _handleDeleteFile(),
+    });
   };
 
   return (

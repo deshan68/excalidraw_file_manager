@@ -3,15 +3,14 @@ import "@radix-ui/themes/styles.css";
 import Navigator from "./components/Navigator";
 import Layout from "./components/Layout";
 import { screens } from "./constants/constants";
-import { AppProvider } from "./context/AppProvider";
+import ConfirmationPopup from "./components/ConfirmationPopup";
 
 const App = () => {
   return (
-    <AppProvider>
-      <Layout>
-        <Navigator screens={screens} />
-      </Layout>
-    </AppProvider>
+    <Layout>
+      <Navigator screens={screens} />
+      <ConfirmationPopup />
+    </Layout>
   );
 };
 

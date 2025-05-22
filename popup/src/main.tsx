@@ -6,13 +6,16 @@ import "./index.css";
 import { Provider } from "react-redux";
 import store from "./store/index.ts";
 import { ConfirmationProvider } from "./context/ConfirmationContext.tsx";
+import { AppProvider } from "./context/AppProvider.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <Theme>
       <ConfirmationProvider>
         <Provider store={store}>
-          <App />
+          <AppProvider>
+            <App />
+          </AppProvider>
         </Provider>
       </ConfirmationProvider>
     </Theme>

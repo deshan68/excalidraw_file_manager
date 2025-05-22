@@ -38,7 +38,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       });
       if (response) setIsValidUrl(true);
     } catch (error) {
-      console.error("Error while checking current URL");
+      console.error("Error while checking current URL: ", error);
     }
   };
 
@@ -49,7 +49,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       });
       loadInitialData(response || "");
     } catch (error) {
-      console.error("Error while getting current File name");
+      console.error("Error while getting current File name: ", error);
     }
   };
 
